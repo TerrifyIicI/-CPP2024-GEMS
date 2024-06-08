@@ -1,6 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+
+#include "Shader.h"
 #include <GL/glew.h>
 #include <functional>
 #include <map>
@@ -13,21 +15,39 @@ enum ShapeType {
     RHOMBUS
 };
 
+enum Color {
+    Red,
+    Green,
+    Blue,
+    Yellow,
+    Black,
+};
+
+
 using DrawFunction = std::function<void(GLfloat, GLfloat)>;
 using ShapeMap = std::map<ShapeType, DrawFunction>;
+using ColorMap = std::map<Color, std::function<void()>>;
 
 class Renderer {
 public:
     Renderer(GLuint VBO, GLuint VAO, int x, int y);
+    Renderer(GLuint VBO, GLuint VAO, int x, int y, GLint vertexColorLocation);
     void drawBorderLines();
     void drawGrid(int x, int y);
     void drawSquareLines(int x, int y);
     void drawObject(int x, int y, ShapeType shapeType);
-    void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType); 
+    void drawObject(int x, int y, ShapeType shapeType, GLint vertexColorLocation);
+    void drawObject(int x, int y, ShapeType shapeType, Color color);
+    void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType);
+    void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType1, ShapeType shapeType2);
+    void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType, Color color);
+    void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType1, Color color1, ShapeType shapeType2, Color color2);
 private:
     GLuint VBO, VAO;
     GLfloat dx, dy;
-    void init(GLfloat* vertices, GLfloat size);
+    GLint vertexColorLocation;
+    void init3(GLfloat* vertices, GLfloat size);
+    //void init6(GLfloat* vertices, GLfloat* colors, GLsizei size);
     void draw_line(int size);
     void _drawReule(GLfloat x, GLfloat y);
     void _drawSquareLines(GLfloat x, GLfloat y);
@@ -35,10 +55,11 @@ private:
     void _drawTriangle(GLfloat x, GLfloat y);
     void _drawRhombus(GLfloat x, GLfloat y);
     void _drawSquare(GLfloat x, GLfloat y);
-    GLfloat animate_step;
     ShapeMap createShapeMap();
+    ColorMap createColorMap();
+    GLfloat animate_step;
     void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object);
-    void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object, std::function<void(GLfloat, GLfloat)> draw_object2);
+    void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object, Color color);
 };
 
 #endif

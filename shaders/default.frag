@@ -1,7 +1,9 @@
 #version 330 core
-out vec4 FragColor;
+out vec4 color;
+
+uniform vec4 ourColor; // ћы устанавливаем значение этой переменной в коде OpenGL.
 
 void main()
 {
-    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-}
+    color = ourColor;
+}  

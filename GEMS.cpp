@@ -1,5 +1,4 @@
-﻿#define _USE_MATH_DEFINES
-#include <iostream>
+﻿#include <iostream>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -51,9 +50,10 @@ int main()
     // Build and compile our shader program
     Shader ourShader("shaders/default.vs", "shaders/default.frag");
     GLuint VBO, VAO;
+    GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    Renderer ren = Renderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts);
+    Renderer ren = Renderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);
 
     // Game loop
     while (!glfwWindowShouldClose(window))
@@ -70,15 +70,30 @@ int main()
         ourShader.Use();
         ren.drawGrid(x_parts, y_parts);
         ren.drawBorderLines();
-        ren.drawObject(1, 3, SQUARE);
-        ren.drawObject(3, 4, RHOMBUS);
+
+
+        ren.drawObject(1, 3, SQUARE, vertexColorLocation);
+
+        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 1.0f, 1.0f);
+        ren.drawObject(3, 4, RHOMBUS, Red);
+
+        glUniform4f(vertexColorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
         ren.drawObject(5, 2, TRIANGLE);
+
+        glUniform4f(vertexColorLocation, 0.0f, 0.5f, 0.5f, 1.0f);
         ren.drawObject(4, 3, ELLIPSE);
+
+        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.5f, 1.0f);
         ren.drawObject(3, 6, REULE);
+
+        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
         ren.drawSquareLines(x_index, y_index);
-        ren.Animate(2, 5, 3, 5, true, REULE);
-        ren.Animate(4, 3, 4, 5, false, SQUARE);
+        ren.Animate(2, 5, 3, 5, true, REULE, Blue);
+        ren.Animate(4, 3, 2, 7, false, SQUARE, Red, SQUARE, Green);
+
         //ren.drawGrid(x_parts, y_parts);
+        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черные объекты 
+
 
         // Swap the screen buffers
         glfwSwapBuffers(window);
