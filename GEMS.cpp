@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include "Shader.h"
 #include <math.h>
+#include <functional>
 
 
 // Function prototypes
@@ -23,7 +24,7 @@ class Renderer {
 
 private:
     GLuint VBO, VAO;
-    float dx, dy;
+    GLfloat dx, dy;
 
     void init(GLfloat* vertices, GLuint size) {
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -41,7 +42,7 @@ private:
         glBindVertexArray(0);
     }
 
-    void ReuleauxTriangle(GLfloat x, GLfloat y) {
+    void _drawReule(GLfloat x, GLfloat y) {
         const int pointCount = 360;
         const float step = float(2 * M_PI) / pointCount;
 
@@ -71,7 +72,7 @@ private:
         glBindVertexArray(0);
     }
 
-    void drawSquareLines(GLfloat x, GLfloat y) {
+    void _drawSquareLines(GLfloat x, GLfloat y) {
 
         // Рисуем квадрат
         GLfloat vertices[] = {
@@ -86,7 +87,7 @@ private:
         draw_line(sizeof(vertices));
     }
 
-    void FillEllipse(GLfloat x, GLfloat y) {
+    void _drawEllipse(GLfloat x, GLfloat y) {
         const int pointCount = 10;
         const float step = float(2 * M_PI) / pointCount;
 
@@ -113,7 +114,7 @@ private:
         glBindVertexArray(0);
     }
 
-    void drawTriangle(GLfloat x, GLfloat y) {
+    void _drawTriangle(GLfloat x, GLfloat y) {
 
         GLfloat vertices[] = {
             // Positions
@@ -128,7 +129,7 @@ private:
         glBindVertexArray(0);
     }
 
-    void drawRhombus(GLfloat x, GLfloat y) {
+    void _drawRhombus(GLfloat x, GLfloat y) {
         GLfloat vertices[] = {
             // Positions
             x + dx / 2, y, 0.0f,
@@ -142,7 +143,7 @@ private:
         glBindVertexArray(0);
     }
 
-    void drawSquare(GLfloat x, GLfloat y) {
+    void _drawSquare(GLfloat x, GLfloat y) {
 
         // Рисуем квадрат
         GLfloat vertices[] = {
@@ -160,13 +161,41 @@ private:
 
     GLfloat animate_step;
 
+    void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object) {
+        GLfloat delta_x = (GLfloat)(x - x_new) * dx;
+        GLfloat delta_y = (GLfloat)(y - y_new) * dy;
+        GLfloat steps = 60;
+        if (animate_step < steps) {
+            if (x < x_new)
+                if (y < y_new)
+                    draw_object((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps);
+                else
+                    draw_object((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 - animate_step * delta_y / steps);
+            else
+                if (y < y_new)
+                    draw_object((GLfloat)x * dx - 1 + dx / 2 - animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps);
+                else
+                    draw_object((GLfloat)x * dx - 1 + dx / 2 - animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 - animate_step * delta_y / steps);
+            animate_step += 1;
+        }
+        else if (animate_step == steps)
+            animate_step = 0;
+
+        if (!flag) {
+            _AnimateDrawObject(x_new, y_new, x, y, true, draw_object);
+        }
+    }
+
 public:
 
-    Renderer(GLuint VBO_, GLuint VAO_) : VBO(VBO_), VAO(VAO_) {
+    Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_) {
         glBindVertexArray(VAO);
-        dx = 0, 5; dy = 0, 5;
         animate_step = 0;
+
+        Renderer::dx = 2.0f / ((GLfloat)x + 2.0f);
+        Renderer::dy = 2.0f / ((GLfloat)y + 3.0f);
     }
+
 
     void drawBorderLines() {
         GLfloat vertices[] = {
@@ -184,8 +213,6 @@ public:
     void drawGrid(int x, int y) {
 
         glLineWidth(3);
-        dx = 2.0f / (x + 2);
-        dy = 2.0f / (y + 3);
 
         // Рисуем вертикальные линии
         float y1 = -1.0f + dy;
@@ -219,54 +246,63 @@ public:
     }
 
     void drawRhombus(int x, int y) {
-        drawRhombus((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+        _drawRhombus((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
     void drawSquare(int x, int y) {
-        drawSquare((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+        _drawSquare((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
     void drawTriangle(int x, int y) {
-        drawTriangle((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+        _drawTriangle((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
     void drawSquareLines(int x, int y) {
-        drawSquareLines((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+        _drawSquareLines((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
-    void FillEllipse(int x, int y) {
-        FillEllipse((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+    void drawEllipse(int x, int y) {
+        _drawEllipse((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
     void ReuleauxTriangle(int x, int y) {
-        ReuleauxTriangle((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
+        _drawReule((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
     }
 
-    void AnimateReuleauxTriangle(int x, int y, int x_new, int y_new, bool flag) {
-        GLfloat delta_x = (GLfloat)(x - x_new) * dx;
-        GLfloat delta_y = (GLfloat)(y - y_new) * dy;
-        GLfloat steps = 20;
-        if (animate_step < steps) {
-            animate_step += 1;
-            if (x < x_new)
-                if (y < y_new)
-                    ReuleauxTriangle((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps);
-                else
-                    ReuleauxTriangle((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 - animate_step * delta_y / steps);
-            else
-                if (y < y_new)
-                    ReuleauxTriangle((GLfloat)x * dx - 1 + dx / 2 - animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps);
-                else
-                    ReuleauxTriangle((GLfloat)x * dx - 1 + dx / 2 - animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 - animate_step * delta_y / steps);
-        }
-        else if (animate_step == steps)
-            animate_step = 0;
-
-        if (!flag) {
-            AnimateReuleauxTriangle(x_new, y_new, x, y, true);
-        }
+    void AnimateReule(int x, int y, int x_new, int y_new, bool flag) {
+        auto draw_object = [this](GLfloat x, GLfloat y) {
+            this->_drawReule(x, y);
+        };
+        _AnimateDrawObject(x, y, x_new, y_new, flag, draw_object);
     }
 
+    void AnimateSquare(int x, int y, int x_new, int y_new, bool flag) {
+        auto draw_object = [this](GLfloat x, GLfloat y) {
+            this->_drawSquare(x, y);
+        };
+        _AnimateDrawObject(x, y, x_new, y_new, flag, draw_object);
+    }
+
+    void AnimateEllipse(int x, int y, int x_new, int y_new, bool flag) {
+        auto draw_object = [this](GLfloat x, GLfloat y) {
+            this->_drawEllipse(x, y);
+        };
+        _AnimateDrawObject(x, y, x_new, y_new, flag, draw_object);
+    }
+
+    void AnimateTriangle(int x, int y, int x_new, int y_new, bool flag) {
+        auto draw_object = [this](GLfloat x, GLfloat y) {
+            this->_drawTriangle(x, y);
+        };
+        _AnimateDrawObject(x, y, x_new, y_new, flag, draw_object);
+    }
+
+    void AnimateRhombus(int x, int y, int x_new, int y_new, bool flag) {
+        auto draw_object = [this](GLfloat x, GLfloat y) {
+            this->_drawRhombus(x, y);
+        };
+        _AnimateDrawObject(x, y, x_new, y_new, flag, draw_object);
+    }
 };
 
 
@@ -303,7 +339,7 @@ int main()
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    Renderer ren = Renderer(VBO, VAO);
+    Renderer ren = Renderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts);
 
     // Game loop
     while (!glfwWindowShouldClose(window))
@@ -323,10 +359,11 @@ int main()
         ren.drawSquare(1, 3);
         ren.drawRhombus(3, 4);
         ren.drawTriangle(5, 2);
-        ren.FillEllipse(4, 3);
+        ren.drawEllipse(4, 3);
         ren.ReuleauxTriangle(3, 6);
         ren.drawSquareLines(x_index, y_index);
-        ren.AnimateReuleauxTriangle(2, 5, 3, 5, true);
+        ren.AnimateReule(2, 5, 3, 5, true);
+        ren.AnimateSquare(4, 5, 4, 3, true);
         //ren.drawGrid(x_parts, y_parts);
 
         // Swap the screen buffers
