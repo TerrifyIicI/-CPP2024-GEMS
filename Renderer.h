@@ -23,6 +23,12 @@ enum Color {
     Black,
 };
 
+struct GameObject {
+    int x;
+    int y;
+    Color color;
+    ShapeType shapeType;
+};
 
 using DrawFunction = std::function<void(GLfloat, GLfloat)>;
 using ShapeMap = std::map<ShapeType, DrawFunction>;
@@ -30,14 +36,19 @@ using ColorMap = std::map<Color, std::function<void()>>;
 
 class Renderer {
 public:
+    GLfloat animate_step;
+    GLint vertexColorLocation;
     Renderer(GLuint VBO, GLuint VAO, int x, int y);
     Renderer(GLuint VBO, GLuint VAO, int x, int y, GLint vertexColorLocation);
     void drawBorderLines();
     void drawGrid(int x, int y);
     void drawSquareLines(int x, int y);
+    void drawObject(GameObject obj);
     void drawObject(int x, int y, ShapeType shapeType);
     void drawObject(int x, int y, ShapeType shapeType, GLint vertexColorLocation);
     void drawObject(int x, int y, ShapeType shapeType, Color color);
+    void Animate(GameObject obj, int x_new, int y_new, bool flag);
+    void Animate(GameObject obj1, GameObject obj2, bool flag);
     void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType);
     void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType1, ShapeType shapeType2);
     void Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType, Color color);
@@ -45,7 +56,6 @@ public:
 private:
     GLuint VBO, VAO;
     GLfloat dx, dy;
-    GLint vertexColorLocation;
     void init3(GLfloat* vertices, GLfloat size);
     //void init6(GLfloat* vertices, GLfloat* colors, GLsizei size);
     void draw_line(int size);
@@ -57,7 +67,6 @@ private:
     void _drawSquare(GLfloat x, GLfloat y);
     ShapeMap createShapeMap();
     ColorMap createColorMap();
-    GLfloat animate_step;
     void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object);
     void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object, Color color);
 };

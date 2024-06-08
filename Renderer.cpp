@@ -268,6 +268,10 @@ void Renderer::drawObject(int x, int y, ShapeType shapeType, Color color) {
     draw_object((GLfloat)x * dx - 1 + dx / 2, (GLfloat)y * dy - 1 + dy / 2);
 }
 
+void Renderer::drawObject(GameObject obj) {
+    drawObject(obj.x, obj.y, obj.shapeType, obj.color);
+}
+
 void Renderer::Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType) {
     ShapeMap shapeMap = createShapeMap();
     auto draw_object = shapeMap[shapeType];
@@ -292,6 +296,7 @@ void Renderer::Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType 
 }
 
 void Renderer::Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType shapeType1, Color color1, ShapeType shapeType2, Color color2) {
+
     ShapeMap shapeMap1 = createShapeMap();
     ColorMap colorMap1 = createColorMap();
     auto draw_object1 = shapeMap1[shapeType1];
@@ -305,4 +310,12 @@ void Renderer::Animate(int x, int y, int x_new, int y_new, bool flag, ShapeType 
     color_function2();
     auto draw_object2 = shapeMap2[shapeType2];
     _AnimateDrawObject(x_new, y_new, x, y, flag, draw_object2);
+}
+
+void Renderer::Animate(GameObject obj, int x_new, int y_new, bool flag) {
+    Animate(obj.x, obj.y, x_new, y_new, flag, obj.shapeType, obj.color);
+}
+
+void Renderer::Animate(GameObject obj1, GameObject obj2, bool flag) {
+    Animate(obj1.x, obj1.y, obj2.x, obj2.y, flag, obj1.shapeType, obj1.color, obj2.shapeType, obj2.color);
 }

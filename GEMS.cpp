@@ -4,6 +4,9 @@
 #include <GLFW/glfw3.h>
 #include "Shader.h"
 #include <math.h>
+#include <string>
+#include <vector>
+#include <list>
 #include <functional>
 #include "Renderer.h"
 
@@ -18,6 +21,47 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 // Window dimensions
 GLuint WIDTH = 600, HEIGHT = 800;
 const int x_parts = 5, y_parts = 7;
+
+class GameField {
+public:
+    GameField(int x_parts, int y_parts) : x_parts(x_parts), y_parts(y_parts) {
+        srand(time(0));
+        for (int i = 0; i < x_parts; ++i) {
+            rows.push_back(std::list<GameObject>());
+            for (int j = 1; j <= y_parts; ++j) {
+                rows[i].push_back({ i + 1, j, static_cast<Color>(rand() % 3), ShapeType::SQUARE });
+            }
+        }
+    }
+
+    std::vector<std::list<GameObject>> rows;
+    int x_parts;
+    int y_parts;
+};
+
+class GameRenderer : public Renderer, public GameField {
+public:
+    GameRenderer(GLuint VBO_, GLuint VAO_, int x_parts, int y_parts, GLint vertexColorLocation_)
+        : Renderer(VBO_, VAO_, x_parts, y_parts, vertexColorLocation_), GameField(x_parts, y_parts) {
+        // Инициализируйте любые дополнительные поля класса GameRenderer здесь
+    }
+
+    // Измените этот метод
+    void drawField() {
+
+        for (auto& row : rows) { // Используйте ссылку, чтобы избежать копирования
+            for (const auto& obj : row) {
+                drawObject(obj);
+            }
+        }
+
+        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черный
+        drawBorderLines();
+        drawGrid(x_parts, y_parts);
+        drawSquareLines(x_index, y_index);
+    }
+
+};
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
@@ -40,7 +84,6 @@ int main()
 
     // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
     glewExperimental = GL_TRUE;
-    // Initialize GLEW to setup the OpenGL Function pointers
     glewInit();
 
     // Define the viewport dimensions
@@ -50,10 +93,11 @@ int main()
     // Build and compile our shader program
     Shader ourShader("shaders/default.vs", "shaders/default.frag");
     GLuint VBO, VAO;
-    GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    Renderer ren = Renderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);
+    GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
+
+    GameRenderer ren = GameRenderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);
 
     // Game loop
     while (!glfwWindowShouldClose(window))
@@ -68,32 +112,7 @@ int main()
 
         // Draw the triangle
         ourShader.Use();
-        ren.drawGrid(x_parts, y_parts);
-        ren.drawBorderLines();
-
-
-        ren.drawObject(1, 3, SQUARE, vertexColorLocation);
-
-        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 1.0f, 1.0f);
-        ren.drawObject(3, 4, RHOMBUS, Red);
-
-        glUniform4f(vertexColorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-        ren.drawObject(5, 2, TRIANGLE);
-
-        glUniform4f(vertexColorLocation, 0.0f, 0.5f, 0.5f, 1.0f);
-        ren.drawObject(4, 3, ELLIPSE);
-
-        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.5f, 1.0f);
-        ren.drawObject(3, 6, REULE);
-
-        glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-        ren.drawSquareLines(x_index, y_index);
-        ren.Animate(2, 5, 3, 5, true, REULE, Blue);
-        ren.Animate(4, 3, 2, 7, false, SQUARE, Red, SQUARE, Green);
-
-        //ren.drawGrid(x_parts, y_parts);
-        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черные объекты 
-
+        ren.drawField();
 
         // Swap the screen buffers
         glfwSwapBuffers(window);
