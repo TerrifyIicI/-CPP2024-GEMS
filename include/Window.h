@@ -19,4 +19,4 @@ void initGLEW();
 void initOpenGL(GLFWwindow*& window);
 void cleanup(GLuint& VAO, GLuint& VBO);
 
-#endif#pragma once
+#endif
