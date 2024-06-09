@@ -25,4 +25,3 @@ struct GameObject {
 };
 
 #endif // GAMEOBJECTS_H
-#pragma once

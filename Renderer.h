@@ -17,7 +17,7 @@ using ColorMap = std::map<Color, std::function<void()>>;
 
 class Renderer {
 public:
-    GLfloat steps = 30;
+    GLfloat steps = 100;
     GLfloat animate_step;
     GLint vertexColorLocation;
     Renderer(GLuint VBO, GLuint VAO, int x, int y);

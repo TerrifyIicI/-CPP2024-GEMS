@@ -100,7 +100,10 @@ public:
                 }
             });
 
-        animate->animateObjectMovement(objects_to_remove);
+
+        if (!objects_to_remove.empty()) {
+            animate->animateObjectMovement(objects_to_remove);
+        }
 
         objects_to_remove.erase(std::unique(objects_to_remove.begin(), objects_to_remove.end(),
             [](const GameObject* a, const GameObject* b) {
@@ -253,40 +256,67 @@ public:
 class GameRenderer : public Renderer, public GameField, public IRenderer {
 private:
     inline static GameRenderer* interface;
+    bool animate_flag;
 public:
     GameRenderer(GLuint VBO_, GLuint VAO_, int x_parts, int y_parts, GLint vertexColorLocation_)
         : Renderer(VBO_, VAO_, x_parts, y_parts, vertexColorLocation_), GameField(x_parts, y_parts) {
         interface = this;
         animate.reset(this);
+        animate_flag = false;
     }
 
     void drawField() {
-        if (swap_queue.empty()) {
+        if (!animate_flag) {
             for (auto& row : rows) {
                 for (const auto& obj : row) {
                     drawObject(obj);
                 }
             }
         }
+    }
+
+    void drawOldField() {
+        for (auto& row : rows_copy) {
+            for (const auto& obj : row) {
+                drawObject(obj);
+            }
+        }
+    }
+
+    void drawSwap() {
+        for (auto& data : swap_queue) {
+            Animate(data.obj1, data.obj2, true);
+        }
+        if (animate_step == steps || animate_step == 0) {
+            swap_queue.clear();
+            animate_flag = false;
+        }
+        animate_flag = true;
+    }
+
+    void drawMove() {
+        for (auto& data : move_queue) {
+            Animate(data.obj, data.x_new, data.y_new, true);
+        }
+        if (animate_step < steps / move_queue.size()) {
+            move_queue.clear();
+        }
+        animate_flag = false;
+    }
+
+    void GEMS() {
+        if (animate_flag) {
+            drawOldField();
+        }
         else {
-            for (auto& row : rows_copy) {
-                for (const auto& obj : row) {
-                    drawObject(obj);
-                }
-            }
-            for (auto& entry : swap_queue) {
-                if (std::holds_alternative<SwapObjectData>(entry)) {
-                    auto& data = std::get<SwapObjectData>(entry);
-                    Animate(data.obj1, data.obj2, true);
-                }
-                else if (std::holds_alternative<AnimateObjectMovementData>(entry)) {
-                    auto& data = std::get<AnimateObjectMovementData>(entry);
-                    Animate(data.obj, data.x_new, data.y_new, true);
-                }
-            }
-            if (animate_step == steps || animate_step == 0) {
-                swap_queue.clear();
-            }
+            drawField();
+        }
+        if (!swap_queue.empty() && animate_flag) {
+            drawSwap();
+        }
+        else if (!move_queue.empty())
+        {
+            drawMove();
         }
         glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черный
         drawBorderLines();
@@ -351,17 +381,20 @@ public:
         int y_new;
     };
 
-    using SwapQueueEntry = std::variant<SwapObjectData, AnimateObjectMovementData>;
-    using SwapQueue = std::vector<SwapQueueEntry>;
+    using AnimeteSwap = std::vector<SwapObjectData>;
+    using AnimeteMovemen = std::vector<AnimateObjectMovementData>;
     std::list<std::list<GameObject>> rows_copy;
 
-    SwapQueue swap_queue;
+    AnimeteSwap swap_queue;
+    AnimeteMovemen move_queue;
+
 
     void swapObject(GameObject& obj1, GameObject& obj2) {
-        swap_queue.push_back(SwapObjectData{ obj1, obj2 });
+        swap_queue.push_back({ obj1, obj2 });
         std::vector<GameObject*> objects_to_remove{ &obj1, &obj2 };
         rows_copy = rows;
         remove_objects(objects_to_remove);
+        animate_flag = true;
     }
 
 
@@ -383,12 +416,40 @@ public:
         }
     }
 
-
     void animateObjectMovement(std::vector<GameObject*>& objects_to_remove) {
-        //remove_objects (objects_to_remove);
-        //swap_queue.push_back(AnimateObjectMovementData{std::ref(obj), x_new, y_new});
-    }
+        int deltaX = 0;
+        auto row = rows.begin();
+        auto remove_obj = objects_to_remove.begin();
+        GameObject* remove = *remove_obj;
 
+        for (int i = 1; i < remove->x; i++) {
+            ++row;
+        }
+
+        while (true) {
+            int deltaY = 0;
+            for (auto& game_obj : *row) {
+                if (remove->x == game_obj.x && remove->y == game_obj.y) {
+                    deltaY++;
+                    ++remove_obj;
+                    if (remove_obj == objects_to_remove.end())
+                        return;
+                    else
+                        remove = *remove_obj;
+                }
+                else if (deltaY != 0 || deltaX != 0) {
+                    move_queue.push_back({ game_obj, game_obj.x - deltaX, game_obj.y - deltaY });
+                }
+                if (deltaY == std::distance(row->begin(), row->end())) {
+                    deltaX++;
+                }
+            }
+            while (remove->x - 1 < std::distance(rows.begin(), row))
+            {
+                --row;
+            }
+        }
+    }
 };
 
 // The MAIN function, from here we start the application and run the game loop
@@ -440,7 +501,7 @@ int main()
 
         // Draw the triangle
         ourShader.Use();
-        ren.drawField();
+        ren.GEMS();
 
         // Swap the screen buffers
         glfwSwapBuffers(window);
