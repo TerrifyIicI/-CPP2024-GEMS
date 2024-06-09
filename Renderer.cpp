@@ -4,6 +4,7 @@
 #include <vector>
 
 
+
 void Renderer::init3(GLfloat* vertices, GLfloat size) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
@@ -187,6 +188,154 @@ void Renderer::_drawBomb(GLfloat x, GLfloat y) {
     glBindVertexArray(0);
 }
 
+void Renderer::_drawReturn(GLfloat x, GLfloat y) {
+
+    // Устанавливаем цвет вершин
+    glUniform4f(vertexColorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+
+    // Рисуем эллипс
+    const int pointCount = 30; // Больше точек для более гладкого эллипса
+    GLfloat vertices[pointCount * 2 * 3]; // 2 вершины на отрезок, 3 координаты на вершину
+
+    float angle = 0;
+    float gapAngle = 0.25 * (2 * M_PI); // Угол разрыва эллипса
+    float gapStart = 0.8 * pointCount; // Начало разрыва эллипса
+    float gapEnd = 0.99 * pointCount; // Конец разрыва эллипса
+
+    for (int i = 0; i < gapStart; i++) {
+        float angle = i * (2 * M_PI / pointCount);
+
+        float x1 = dx / 4 * cosf(angle) + x;
+        float y1 = dy / 4 * sinf(angle) + y;
+        float x2 = dx / 4 * cosf(angle + (2 * M_PI / pointCount)) + x;
+        float y2 = dy / 4 * sinf(angle + (2 * M_PI / pointCount)) + y;
+
+        vertices[i * 6] = x1;
+        vertices[i * 6 + 1] = y1;
+        vertices[i * 6 + 2] = 0.0f;
+
+        vertices[i * 6 + 3] = x2;
+        vertices[i * 6 + 4] = y2;
+        vertices[i * 6 + 5] = 0.0f;
+    }
+
+    for (int i = gapEnd; i < pointCount; i++) {
+        float angle = i * (2 * M_PI / pointCount);
+
+        float x1 = dx / 4 * cosf(angle) + x;
+        float y1 = dy / 4 * sinf(angle) + y;
+        float x2 = dx / 4 * cosf(angle + (2 * M_PI / pointCount)) + x;
+        float y2 = dy / 4 * sinf(angle + (2 * M_PI / pointCount)) + y;
+
+        vertices[i * 6] = x1;
+        vertices[i * 6 + 1] = y1;
+        vertices[i * 6 + 2] = 0.0f;
+
+        vertices[i * 6 + 3] = x2;
+        vertices[i * 6 + 4] = y2;
+        vertices[i * 6 + 5] = 0.0f;
+    }
+
+    glLineWidth(5);
+    init3(vertices, sizeof(vertices));
+    glDrawArrays(GL_LINE_STRIP, 0, gapStart * 2);
+    glDrawArrays(GL_LINE_STRIP, gapEnd * 2, (pointCount - gapEnd) * 2);
+
+    // Рисуем стрелку
+    const int arrowPointCount = 3; // Больше точек для более острых углов стрелки
+    GLfloat arrowVertices[arrowPointCount * 3];
+    float arrowLength = dx / 4; // Длина стрелки
+    float arrowAmplitude = arrowLength / 2; // Большая амплитуда для более острых углов стрелки
+
+    for (int i = 0; i < arrowPointCount; ++i) {
+        float t = i * (M_PI / 2);
+        arrowVertices[i * 3] = x + dx / 4 * cosf(angle) - arrowAmplitude * cosf(t + angle);
+        arrowVertices[i * 3 + 1] = y + dy / 4 * sinf(angle) - arrowAmplitude * sinf(t + angle);
+        arrowVertices[i * 3 + 2] = 0.0f;
+    }
+
+    init3(arrowVertices, sizeof(arrowVertices));
+    glLineWidth(2);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, arrowPointCount);
+
+    glBindVertexArray(0);
+}
+
+void Renderer::_drawGemsText(GLfloat x, GLfloat y) {
+    // Устанавливаем цвет вершин
+
+    glLineWidth(10);
+
+    // Рисуем слово "GEMS"
+    GLfloat verticesG[] = {
+        // Positions
+        // Буква "G"
+        x + dx / 2, y + dy * 3 / 4, 0,
+        x + dx / 2, y + dy, 0,
+        x + dx / 8, y + dy, 0,
+        x + dx / 8, y + dy / 4, 0,
+        x + dx / 8, y, 0,
+        x + dx / 2, y, 0,
+        x + dx / 4, y, 0,
+        x + dx / 2, y, 0,
+        x + dx / 2, y + dy / 2, 0,
+        x + dx * 7 / 24, y + dy / 2, 0
+    };
+    glUniform4f(vertexColorLocation, 0.3f, 0.6f, 0.3f, 1.0f);
+    init3(verticesG, sizeof(verticesG));
+    glDrawArrays(GL_LINE_STRIP, 0, sizeof(verticesG) / (3 * sizeof(GLfloat)));
+    glBindVertexArray(0);
+
+    GLfloat verticesE[] = {
+        // Буква "E"
+        x + dx * 2 / 3, y + dy, 0,
+        x + dx * 2 / 3, y, 0,
+        x + dx, y, 0,
+        x + dx * 2 / 3, y, 0,
+        x + dx * 2 / 3, y + dy / 2, 0,
+        x + dx, y + dy / 2, 0,
+        x + dx * 2 / 3, y + dy / 2, 0,
+        x + dx * 2 / 3, y + dy, 0,
+        x + dx, y + dy, 0,
+
+    };
+
+    glUniform4f(vertexColorLocation, 1.0f, 0.7f, 0.0f, 1.0f);
+    init3(verticesE, sizeof(verticesE));
+    glDrawArrays(GL_LINE_STRIP, 0, sizeof(verticesE) / (3 * sizeof(GLfloat)));
+    glBindVertexArray(0);
+
+    GLfloat verticesM[] = {
+        // Буква "M"
+        x + dx * 9 / 8, y - dy / 16, 0,
+        x + dx * 9 / 8, y + dy + dy / 16, 0,
+        x + dx * 85 / 64, y + dy / 2, 0,
+        x + dx * 25 / 16, y + dy + dy / 16, 0,
+        x + dx * 25 / 16, y - dy / 16, 0
+    };
+    glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.5f, 1.0f);
+    init3(verticesM, sizeof(verticesM));
+    glDrawArrays(GL_LINE_STRIP, 0, sizeof(verticesM) / (3 * sizeof(GLfloat)));
+    glBindVertexArray(0);
+
+    GLfloat verticesS[] = {
+        // Буква "S"
+        x + dx * 2, y + dy - dy / 8, 0,
+        x + dx * 2, y + dy, 0,
+        x + dx * 14 / 8, y + dy, 0,
+        x + dx * 14 / 8, y + dy / 2, 0,
+        x + dx * 2, y + dy / 2, 0,
+        x + dx * 2, y, 0,
+        x + dx * 14 / 8, y, 0,
+        x + dx * 14 / 8, y + dy / 8, 0
+    };
+
+    glUniform4f(vertexColorLocation, 0.0f, 0.4f, 0.7f, 1.0f);
+    init3(verticesS, sizeof(verticesS));
+    glDrawArrays(GL_LINE_STRIP, 0, sizeof(verticesS) / (3 * sizeof(GLfloat)));
+    glBindVertexArray(0);
+}
+
 void Renderer::_drawFill(GLfloat x, GLfloat y) {
     // Верхний треугольник (линии)
     GLfloat topTriangleVertices[] = {
@@ -273,8 +422,6 @@ void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag,
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_) {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -283,8 +430,6 @@ Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y, GLint vertexColorLocation_) : VBO(VBO_), VAO(VAO_), vertexColorLocation(vertexColorLocation_) {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -353,6 +498,8 @@ ShapeMap Renderer::createShapeMap() {
     shapeMap[RHOMBUS] = std::bind(&Renderer::_drawRhombus, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[BOMB] = std::bind(&Renderer::_drawBomb, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[FILL] = std::bind(&Renderer::_drawFill, this, std::placeholders::_1, std::placeholders::_2);
+    shapeMap[RETURN] = std::bind(&Renderer::_drawReturn, this, std::placeholders::_1, std::placeholders::_2);
+    shapeMap[GEMStext] = std::bind(&Renderer::_drawGemsText, this, std::placeholders::_1, std::placeholders::_2);
     return shapeMap;
 }
 

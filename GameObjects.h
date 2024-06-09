@@ -5,11 +5,13 @@ enum ShapeType
 {
     REULE,
     SQUARE,
-    ELLIPSE,
     TRIANGLE,
     RHOMBUS,
     BOMB,
-    FILL
+    FILL,
+    ELLIPSE,
+    RETURN,
+    GEMStext
 };
 
 enum Color
@@ -28,11 +30,13 @@ enum Color
     WHITE
 };
 
-struct GameObject {
+struct GameObject
+{
     int x;
     int y;
     Color color;
     ShapeType shapeType;
+
     bool operator==(const GameObject& other) const
     {
         return (x == other.x && y == other.y);

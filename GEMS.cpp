@@ -1,5 +1,4 @@
 ﻿#include <iostream>
-#define _USE_MATH_DEFINES
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -17,55 +16,16 @@
 #include <set>
 #include <map>
 
+
 // Window dimensions
 GLuint WIDTH = 600, HEIGHT = 800;
-const int x_parts = 5, y_parts = 7;
+const int x_parts = 9, y_parts = 12;
 
 class GameField {
 private:
-    bool start_flag;
+    bool _start_flag;
+    ShapeType _type;
 
-    bool _removeSameColorObjects(GameObject obj1, GameObject obj2) {
-
-        // Список объектов для удаления
-        std::vector<GameObject*> objects_to_remove;
-        std::vector<GameObject*> objects_to_insert;
-
-
-        if (obj1.shapeType == BOMB) {
-            objects_to_remove.push_back(&obj1);
-            count_bomb++;
-        }
-        else {
-            objects_to_insert = _getObjectsToRemove(obj1);
-            if (!objects_to_insert.empty()) {
-                objects_to_remove.push_back(&obj1);
-                objects_to_remove.insert(objects_to_remove.end(), objects_to_insert.begin(), objects_to_insert.end());
-            }
-        }
-
-        objects_to_insert.clear();
-
-        if (obj2.shapeType == BOMB) {
-            objects_to_remove.push_back(&obj2);
-            count_bomb++;
-        }
-        else {
-            if (obj1.color != obj2.color && obj1.shapeType == obj2.shapeType) {
-                objects_to_insert = _getObjectsToRemove(obj2);
-                if (!objects_to_insert.empty()) {
-                    objects_to_remove.push_back(&obj2);
-                    objects_to_remove.insert(objects_to_remove.end(), objects_to_insert.begin(), objects_to_insert.end());
-                }
-            }
-        }
-
-        _deleteGameObject(objects_to_remove);
-        if (!objects_to_remove.empty()) {
-            return true;
-        }
-        return false;
-    }
 
     std::vector<GameObject*> _getObjectsToRemove(GameObject obj1) {
         std::vector<GameObject*> objects_to_remove;
@@ -173,9 +133,8 @@ private:
         }
     }
 
-
     void _deleteGameObject(std::vector<GameObject*>& objects_to_remove) {
-        if (!start_flag) {
+        if (!_start_flag) {
             if (!objects_to_remove.empty()) {
                 animate->animateObjectMovement(objects_to_remove);
             }
@@ -198,7 +157,7 @@ private:
 
 
         std::list<GameObject*> bonus_squares;
-        if (!start_flag) {
+        if (!_start_flag) {
             for (const auto& obj : objects_to_remove) {
                 std::list<GameObject*> non_empty_squares = _getNonEmptySquaresInRadius(obj, 3);
                 _SetRandomShapeType(non_empty_squares);
@@ -316,68 +275,37 @@ private:
         }
     }
 
-    void _Fill(GameObject* obj) {
-        fill_flag = true;
-    }
-public:
-    GameField(int x, int y) {
-        x_parts = x;
-        y_parts = y;
-        GenerateField(SQUARE);
-    }
-
-    void GenerateField(ShapeType type) {
-        start_flag = true;
-        srand(time(0));
-        int colors = std::ranges::min(x_parts, y_parts) - std::ranges::min(x_parts, y_parts) / 3;
-        do {
-            while (rows.size() < x_parts) {
-                rows.push_back({});
-            }
-            for (auto it = rows.begin(); it != rows.end(); ++it) {
-                int x = std::distance(rows.begin(), it) + 1;
-                while (it->size() < y_parts) {
-                    it->push_back({ x, (int)it->size() + 1, static_cast<Color>(rand() % colors), type });
+    bool _hasThreeOfSameColor() {
+        for (const auto& row : rows) {
+            // Используем карту для подсчета количества объектов каждого цвета в текущем ряду
+            std::map<Color, int> colorCount;
+            for (const auto& obj : row) {
+                colorCount[obj.color]++;
+                if (colorCount[obj.color] == 2) {
+                    // Найдено 3 объекта одного цвета, возвращаем true
+                    return true;
                 }
             }
-        } while (!removeSameColorObjects());
-        start_flag = false;
+        }
+        // Не найдено 3 объекта одного цвета, возвращаем false
+        return false;
     }
 
-    // Метод для получения объекта по заданным координатам
-    GameObject& getObject(int x, int y) {
-
-        static GameObject defaultObject{ 0, 0, WHITE, BOMB };
-        if (x < 1 || y < 1 || x>rows.size()) {
-            return defaultObject;
+    bool _hasNotSameColor(GameObject& obj) {
+        int count = 0;
+        for (const auto& row : rows) {
+            for (const auto& game_obj : row) {
+                if (game_obj.shapeType == _type && game_obj.color != obj.color &&
+                    !((abs(obj.x - game_obj.x) < 1 && abs(obj.y - game_obj.y) <= 1) ||
+                        (abs(obj.x - game_obj.x) <= 1 && abs(obj.y - game_obj.y) < 1))) {
+                    count++;
+                    if (count > 1) {
+                        return true;
+                    }
+                }
+            }
         }
-        auto rowIter = std::next(rows.begin(), x - 1);
-        if (rowIter->size() < y) {
-            return defaultObject;
-        }
-        auto objIter = std::find_if(rowIter->begin(), rowIter->end(), [&](const GameObject& obj) {
-            return obj.x == x && obj.y == y;
-            });
-        return *objIter;
-    }
-
-    bool swapObjects(int x_index, int y_index, int x_index_last, int y_index_last) {
-        auto& obj1 = getObject(x_index, y_index);
-        auto& obj2 = getObject(x_index_last, y_index_last);
-
-        if (animate != nullptr) {
-            auto obj1_copy = obj1;
-            auto obj2_copy = obj2;
-            animate->swapObject(obj1_copy, obj2_copy);
-        }
-
-
-        std::swap(obj1.color, obj2.color);
-        std::swap(obj1.shapeType, obj2.shapeType);
-
-
-        _removeSameColorObjects(obj1, obj2);
-        return true;
+        return false;
     }
 
     std::vector<GameObject*> _getRandomObject(int count) {
@@ -405,26 +333,84 @@ public:
                 count_bomb++;
             }
         }
+        all_objects.clear();
 
         // Удаляем объекты
         return objects_to_remove;
     }
 
-    bool hasThreeOfSameColor() {
-        for (const auto& row : rows) {
-            // Используем карту для подсчета количества объектов каждого цвета в текущем ряду
-            std::map<Color, int> colorCount;
-            for (const auto& obj : row) {
-                colorCount[obj.color]++;
-                if (colorCount[obj.color] == 2) {
-                    // Найдено 3 объекта одного цвета, возвращаем true
-                    return true;
+
+public:
+    GameField(int x, int y, ShapeType type_) : _type(type_) {
+        x_parts = x;
+        y_parts = y;
+        GenerateField();
+    }
+
+    void GenerateField() {
+        _start_flag = true;
+        srand(time(0));
+        int colors = std::ranges::min(x_parts, y_parts) - std::ranges::min(x_parts, y_parts) / 3;
+        do {
+            while (rows.size() < x_parts) {
+                rows.push_back({});
+            }
+            for (auto it = rows.begin(); it != rows.end(); ++it) {
+                int x = std::distance(rows.begin(), it) + 1;
+                while (it->size() < y_parts) {
+                    it->push_back({ x, (int)it->size() + 1, static_cast<Color>(rand() % colors), _type });
                 }
             }
-        }
-        // Не найдено 3 объекта одного цвета, возвращаем false
-        return false;
+        } while (!removeSameColorObjects());
+        _start_flag = false;
+        count_bomb = 0;
     }
+
+    // Метод для получения объекта по заданным координатам
+    GameObject& getObject(int x, int y) {
+
+        static GameObject defaultObject{ 0, 0, WHITE, RHOMBUS };
+        if (x < 1 || y < 1 || x>rows.size()) {
+            return defaultObject;
+        }
+        auto rowIter = std::next(rows.begin(), x - 1);
+        if (rowIter->size() < y) {
+            return defaultObject;
+        }
+        auto objIter = std::find_if(rowIter->begin(), rowIter->end(), [&](const GameObject& obj) {
+            return obj.x == x && obj.y == y;
+            });
+        return *objIter;
+    }
+
+    bool swapObjects(int x_index, int y_index, int x_index_last, int y_index_last) {
+        auto& obj1 = getObject(x_index, y_index);
+        auto& obj2 = getObject(x_index_last, y_index_last);
+
+        if (animate != nullptr) {
+            auto obj1_copy = obj1;
+            auto obj2_copy = obj2;
+            animate->swapObject(obj1_copy, obj2_copy);
+        }
+
+
+        std::swap(obj1.color, obj2.color);
+        std::swap(obj1.shapeType, obj2.shapeType);
+
+        if (obj1.shapeType == BOMB) {
+            _deleteGameObject(obj1);
+            count_bomb++;
+        }
+
+        if (obj2.shapeType == BOMB) {
+            _deleteGameObject(obj2);
+            count_bomb++;
+        }
+
+        removeSameColorObjects();
+        return true;
+    }
+
 
     std::list<std::list<GameObject>> rows;
     inline static int x_parts;
@@ -433,7 +419,7 @@ public:
     inline static int x_index_last, y_index_last;
     std::unique_ptr<IRenderer> animate;
 
-    bool fill_flag;
+    std::list<GameObject> fill;
     int count_bomb;
 
     bool removeSameColorObjects() {
@@ -462,9 +448,37 @@ public:
 
         // Удаляем объекты
         _deleteGameObject(objects_to_remove);
+        bool flag = objects_to_remove.empty();
+        objects_to_remove.clear();
 
         // Возвращаем true, если были удалены объекты
-        return objects_to_remove.empty();
+        return flag;
+    }
+
+    void Fill(GameObject& obj) {
+        if (fill.empty()) {
+            if (_hasNotSameColor(obj)) {
+                obj.shapeType = _type;
+                fill.push_back(obj);
+            }
+            else {
+                return;
+            }
+        }
+        else {
+            if (obj.shapeType != FILL && obj.shapeType != BOMB) {
+                if (!((abs(obj.x - fill.begin()->x) < 1 && abs(obj.y - fill.begin()->y) <= 1) ||
+                    (abs(obj.x - fill.begin()->x) <= 1 && abs(obj.y - fill.begin()->y) < 1)))
+                {
+                    obj.color = fill.begin()->color;
+                    fill.push_back(obj);
+                }
+            }
+            if (fill.size() >= 3) {
+                fill.clear();
+                Update();
+            }
+        }
     }
 
     void Update() {
@@ -473,7 +487,7 @@ public:
             std::vector<GameObject*> objects_to_remove = _getRandomObject(4);
             _deleteGameObject(objects_to_remove);
         }
-        else if (hasThreeOfSameColor()) {
+        else if (_hasThreeOfSameColor()) {
             removeSameColorObjects();
         }
     }
@@ -490,17 +504,34 @@ private:
     }
 
     void _FieldClick() {
+        if (x_index == x_parts + 1 && y_index == y_parts + 2) {
+            rows.clear();
+            GenerateField();
+        }
         // проверяем, что текущий квадрат находится в диапазоне от (1,1) до (x_parts, x_parts)
-        if (x_index >= 1 && x_index <= x_parts && y_index >= 1 && y_index <= y_parts) {
-            _click_on_fild = true;
-            if (((abs(x_index - x_index_last) < 1 && abs(y_index - y_index_last) <= 1) ||
-                (abs(x_index - x_index_last) <= 1 && abs(y_index - y_index_last) < 1))) {
-                interface->swapObjects(x_index, y_index, x_index_last, y_index_last);
-                x_index_last = 0; y_index_last = 0;
-            }
-            else {
-                x_index_last = x_index;
-                y_index_last = y_index;
+        else if (x_index >= 1 && x_index <= rows.size()) {
+            auto row_it = rows.begin();
+            std::advance(row_it, x_index - 1);
+            if (y_index >= 1 && y_index <= row_it->size()) {
+                auto obj_it = row_it->begin();
+                std::advance(obj_it, y_index - 1);
+                _click_on_fild = true;
+                if (obj_it->shapeType == FILL) {
+                    Fill((*obj_it));
+                }
+                else if (!fill.empty()) {
+                    Fill((*obj_it));
+                    _click_on_fild = false;
+                }
+                else if (((abs(x_index - x_index_last) < 1 && abs(y_index - y_index_last) <= 1) ||
+                    (abs(x_index - x_index_last) <= 1 && abs(y_index - y_index_last) < 1))) {
+                    interface->swapObjects(x_index, y_index, x_index_last, y_index_last);
+                    x_index_last = 0; y_index_last = 0;
+                }
+                else {
+                    x_index_last = x_index;
+                    y_index_last = y_index;
+                }
             }
         }
         else
@@ -563,8 +594,8 @@ private:
 
 
 public:
-    GameRenderer(GLuint VBO_, GLuint VAO_, int x_parts, int y_parts, GLint vertexColorLocation_)
-        : Renderer(VBO_, VAO_, x_parts, y_parts, vertexColorLocation_), GameField(x_parts, y_parts) {
+    GameRenderer(GLuint VBO_, GLuint VAO_, int x_parts, int y_parts, ShapeType type_, GLint vertexColorLocation_)
+        : Renderer(VBO_, VAO_, x_parts, y_parts, vertexColorLocation_), GameField(x_parts, y_parts, type_) {
         interface = this;
         animate.reset(this);
     }
@@ -624,6 +655,9 @@ public:
         else {
             drawField();
         }
+
+        drawObject(x_parts + 1, y_parts + 2, RETURN);
+        drawObject(x_parts / 2, y_parts + 1, GEMStext);
         glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черный
         drawBorderLines();
         drawGrid(x_parts, y_parts);
@@ -644,7 +678,6 @@ public:
             x_index = (int)(xpos / (WIDTH / (x_parts + 2)));
             y_index = (int)(ypos / (HEIGHT / (y_parts + 3)));
             y_index = y_parts + 2 - y_index;
-
 
             interface->_FieldClick();
 
@@ -710,30 +743,21 @@ public:
 
 };
 
-// The MAIN function, from here we start the application and run the game loop
+
+
+// Function prototypes
+void initGLFW();
+void initGLEW();
+void initOpenGL(GLFWwindow*& window);
+void gameLoop(GLFWwindow* window, GameRenderer& ren, Shader& ourShader);
+void cleanup(GLuint& VAO, GLuint& VBO);
+
 int main()
 {
-    // Init GLFW
-    glfwInit();
-    // Set all the required options for GLFW
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    initGLFW();
 
-    // Create a GLFWwindow object that we can use for GLFW's functions
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
-
-
-
-    // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
-    glewExperimental = GL_TRUE;
-    glewInit();
-
-    // Define the viewport dimensions
-    glViewport(0, 0, WIDTH, HEIGHT);
-
+    GLFWwindow* window;
+    initOpenGL(window);
 
     // Build and compile our shader program
     Shader ourShader("shaders/default.vs", "shaders/default.frag");
@@ -742,34 +766,56 @@ int main()
     glGenBuffers(1, &VBO);
     GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
 
-    GameRenderer ren = GameRenderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);
+    GameRenderer ren = GameRenderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, SQUARE, vertexColorLocation);
 
     glfwSetMouseButtonCallback(window, ren.mouse_button_callback);
 
-    // Game loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-        glfwPollEvents();
+    gameLoop(window, ren, ourShader);
 
-        // Render
-        // Clear the colorbuffer
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    cleanup(VAO, VBO);
 
-        // Draw the triangle
-        ourShader.Use();
-        ren.GEMS();
-
-        // Swap the screen buffers
-        glfwSwapBuffers(window);
-    }
-
-    // Properly de-allocate all resources once they've outlived their purpose
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    // Terminate GLFW, clearing any resources allocated by GLFW.
-    glfwTerminate();
     return 0;
 }
 
+void initGLFW() {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+}
+
+void initGLEW() {
+    glewExperimental = GL_TRUE;
+    glewInit();
+}
+
+void initOpenGL(GLFWwindow*& window) {
+    window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+
+    initGLEW();
+
+    glViewport(0, 0, WIDTH, HEIGHT);
+}
+
+void gameLoop(GLFWwindow* window, GameRenderer& ren, Shader& ourShader) {
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        ourShader.Use();
+        ren.GEMS();
+
+        glfwSwapBuffers(window);
+    }
+}
+
+void cleanup(GLuint& VAO, GLuint& VBO) {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glfwTerminate();
+}

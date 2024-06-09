@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include <vector>
 
 Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 {
