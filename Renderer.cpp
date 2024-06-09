@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include "Renderer.h"
 #include <math.h>
+#include <vector>
 
 
 void Renderer::init3(GLfloat* vertices, GLfloat size) {

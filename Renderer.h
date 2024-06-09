@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <functional>
 #include <map>
+#include <vector>
 
 enum ShapeType {
     REULE,
