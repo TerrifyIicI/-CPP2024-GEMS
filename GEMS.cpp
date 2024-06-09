@@ -57,8 +57,7 @@ public:
         std::swap(obj1.color, obj2.color);
         std::swap(obj1.shapeType, obj2.shapeType);
 
-        removeSameColorObjects(obj1.x, obj1.y);
-        //removeSameColorObjects(obj2.x, obj2.y);
+        removeSameColorObjects(obj1, obj2);
         return true;
     }
 
@@ -70,31 +69,62 @@ public:
         POINT
     };
 
-    bool removeSameColorObjects(int x, int y) {
-        GameObject& obj = getObject(x, y);
-        Color obj_color = obj.color;
+    bool removeSameColorObjects(GameObject obj1, GameObject obj2) {
 
         // Список объектов для удаления
         std::vector<GameObject*> objects_to_remove;
-        // Добавляем текущий объект в список для удаления
-        objects_to_remove.push_back(&obj);
-        checkNeighbors(obj_color, x, y, objects_to_remove, POINT);
-        std::sort(objects_to_remove.begin(), objects_to_remove.end(),
-            [](const GameObject* a, const GameObject* b) {
-                return a->x > b->x;
-            });
 
-        // Если в списке для удаления 3 или более объектов, удаляем их из игрового поля
-        if (objects_to_remove.size() >= 3) {
-            for (const auto& obj : objects_to_remove) {
-                deleteGameObject(*obj);
-            }
-            return true;
+
+        std::vector<GameObject*> objects_to_insert = getObjectsToRemove(obj1);
+        if (!objects_to_insert.empty()) {
+            objects_to_remove.push_back(&obj1);
+            objects_to_remove.insert(objects_to_remove.end(), objects_to_insert.begin(), objects_to_insert.end());
         }
 
-        // Если в списке для удаления меньше 3 объектов, не удаляем их и возвращаем false
+        objects_to_insert.clear();
+
+        if (obj1.color != obj2.color) {
+            objects_to_insert = getObjectsToRemove(obj2);
+            if (!objects_to_insert.empty()) {
+                objects_to_remove.push_back(&obj2);
+                objects_to_remove.insert(objects_to_remove.end(), objects_to_insert.begin(), objects_to_insert.end());
+            }
+        }
+
+        std::sort(objects_to_remove.begin(), objects_to_remove.end(),
+            [](const GameObject* a, const GameObject* b) {
+                if (a->x == b->x) {
+                    return a->y > b->y;
+                }
+                else {
+                    return a->x > b->x;
+                }
+            });
+
+        objects_to_remove.erase(std::unique(objects_to_remove.begin(), objects_to_remove.end(),
+            [](const GameObject* a, const GameObject* b) {
+                return a->x == b->x && a->y == b->y;
+            }), objects_to_remove.end());
+
+        for (const auto& obj : objects_to_remove) {
+            deleteGameObject(*obj);
+        }
         return false;
     }
+
+    std::vector<GameObject*> getObjectsToRemove(GameObject obj1) {
+        std::vector<GameObject*> objects_to_remove;
+
+        checkNeighbors(obj1.color, obj1.x, obj1.y, objects_to_remove, POINT);
+
+        // Если в списке для удаления меньше 3 объектов, очищаем список
+        if (objects_to_remove.size() < 2) {
+            objects_to_remove.clear();
+        }
+
+        return objects_to_remove;
+    }
+
 
     // Метод для проверки соседних объектов и добавления их в список для удаления, если они имеют тот же цвет
     void checkNeighbors(Color color, int x, int y, std::vector<GameObject*>& objects_to_remove, Direction dir) {
@@ -148,7 +178,7 @@ public:
     GameObject& getObject(int x, int y) {
 
         static GameObject defaultObject{ 0, 0, Black, RHOMBUS };
-        if (x < 1 || y < 1  || x>rows.size()) {
+        if (x < 1 || y < 1 || x>rows.size()) {
             return defaultObject;
         }
         auto rowIter = std::next(rows.begin(), x - 1);
