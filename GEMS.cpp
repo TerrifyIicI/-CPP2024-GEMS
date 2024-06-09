@@ -16,19 +16,11 @@
 #include "Shader.h"
 #include <set>
 #include <map>
-
-// Function prototypes
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
-}
-
 // Window dimensions
 GLuint WIDTH = 600, HEIGHT = 800;
 const int x_parts = 5, y_parts = 7;
+
+
 
 class GameField {
 public:
@@ -49,10 +41,16 @@ public:
         }
     }
 
-
     bool swapObjects(int x_index, int y_index, int x_index_last, int y_index_last) {
         auto& obj1 = getObject(x_index, y_index);
         auto& obj2 = getObject(x_index_last, y_index_last);
+
+        if (animate != nullptr) {
+            auto obj1_copy = obj1;
+            auto obj2_copy = obj2;
+            animate->swapObject(obj1_copy, obj2_copy);
+        }
+
 
         std::swap(obj1.color, obj2.color);
         std::swap(obj1.shapeType, obj2.shapeType);
@@ -124,7 +122,6 @@ public:
 
         return objects_to_remove;
     }
-
 
     // Метод для проверки соседних объектов и добавления их в список для удаления, если они имеют тот же цвет
     void checkNeighbors(Color color, int x, int y, std::vector<GameObject*>& objects_to_remove, Direction dir) {
@@ -241,35 +238,56 @@ public:
         }
     }
 
-
     std::list<std::list<GameObject>> rows;
     inline static int x_parts;
     inline static int y_parts;
     inline static int x_index, y_index;
     inline static int x_index_last, y_index_last;
+    std::unique_ptr<IRenderer> animate;
 
 };
 
-class GameRenderer : public Renderer, public GameField {
+class GameRenderer : public Renderer, public GameField, public IRenderer {
 private:
     inline static GameRenderer* interface;
 public:
     GameRenderer(GLuint VBO_, GLuint VAO_, int x_parts, int y_parts, GLint vertexColorLocation_)
         : Renderer(VBO_, VAO_, x_parts, y_parts, vertexColorLocation_), GameField(x_parts, y_parts) {
         interface = this;
+        animate.reset(this);
     }
 
     void drawField() {
-
-        for (auto& row : rows) {
-            for (const auto& obj : row) {
-                drawObject(obj);
+        if (swap_queue.empty()) {
+            for (auto& row : rows) {
+                for (const auto& obj : row) {
+                    drawObject(obj);
+                }
             }
         }
-
+        else {
+            for (auto& entry : swap_queue) {
+                if (std::holds_alternative<SwapObjectData>(entry)) {
+                    auto& data = std::get<SwapObjectData>(entry);
+                    // Вызываем swapObject с данными из очереди
+                    Animate(data.obj1, data.obj2, true);
+                }
+                else if (std::holds_alternative<AnimateObjectMovementData>(entry)) {
+                    auto& data = std::get<AnimateObjectMovementData>(entry);
+                    // Вызываем animateObjectMovement с данными из очереди
+                    Animate(data.obj, data.x_new, data.y_new, true);
+                }
+            }
+            if (animate_step == steps || animate_step == 0) {
+                swap_queue.clear();
+            }
+        }
         glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); //черный
         drawBorderLines();
         drawGrid(x_parts, y_parts);
+
+
+
         displayFieldClick();
     }
 
@@ -315,6 +333,33 @@ public:
             y_index_last = y_index;
         }
     }
+
+
+
+    struct SwapObjectData {
+        GameObject obj1;
+        GameObject obj2;
+    };
+
+    struct AnimateObjectMovementData {
+        GameObject obj;
+        int x_new;
+        int y_new;
+    };
+
+    using SwapQueueEntry = std::variant<SwapObjectData, AnimateObjectMovementData>;
+    using SwapQueue = std::vector<SwapQueueEntry>;
+
+    SwapQueue swap_queue;
+
+    void swapObject(GameObject& obj1, GameObject& obj2) {
+        swap_queue.push_back(SwapObjectData{ obj1, obj2 });
+    }
+
+    void animateObjectMovement(GameObject& obj, int x_new, int y_new) {
+        swap_queue.push_back(AnimateObjectMovementData{ std::ref(obj), x_new, y_new });
+    }
+
 };
 
 // The MAIN function, from here we start the application and run the game loop
@@ -347,12 +392,11 @@ int main()
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+
     GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
 
     GameRenderer ren = GameRenderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);
 
-    // Set the required callback functions
-    glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, ren.mouse_button_callback);
 
     // Game loop

@@ -3,7 +3,6 @@
 #include <math.h>
 #include <vector>
 
-
 void Renderer::init3(GLfloat* vertices, GLfloat size) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
@@ -140,8 +139,6 @@ void Renderer::_drawSquare(GLfloat x, GLfloat y) {
 void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object) {
     GLfloat delta_x = (GLfloat)(x_new - x) * dx;
     GLfloat delta_y = (GLfloat)(y_new - y) * dy;
-    GLfloat steps;
-    steps = 300;
     if ((animate_step < steps) && (flag)) {
         draw_object((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps);
         animate_step += 1;
@@ -151,10 +148,11 @@ void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag,
     }
     else if (animate_step < steps / 2) {
         draw_object((GLfloat)x * dx - 1 + dx / 2 + animate_step * delta_x / steps * 2, (GLfloat)y * dy - 1 + dy / 2 + animate_step * delta_y / steps * 2);
-
+        animate_step += 1;
     }
     else if (animate_step > steps / 2) {
         draw_object((GLfloat)x_new * dx - 1 + dx / 2 - (animate_step - steps / 2) * delta_x / steps * 2, (GLfloat)y_new * dy - 1 + dy / 2 - (animate_step - steps / 2) * delta_y / steps * 2);
+        animate_step += 1;
     }
 }
 
@@ -320,3 +318,4 @@ void Renderer::Animate(GameObject obj, int x_new, int y_new, bool flag) {
 void Renderer::Animate(GameObject obj1, GameObject obj2, bool flag) {
     Animate(obj1.x, obj1.y, obj2.x, obj2.y, flag, obj1.shapeType, obj1.color, obj2.shapeType, obj2.color);
 }
+

@@ -35,6 +35,12 @@
     <ClInclude Include="Renderer.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="IRenderer.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default.frag">
