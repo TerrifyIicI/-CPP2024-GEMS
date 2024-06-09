@@ -47,6 +47,7 @@ private:
     void _drawTriangle(GLfloat x, GLfloat y);
     void _drawRhombus(GLfloat x, GLfloat y);
     void _drawSquare(GLfloat x, GLfloat y);
+    void _drawBomb(GLfloat x, GLfloat y);
     ShapeMap createShapeMap();
     ColorMap createColorMap();
     void _AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object);

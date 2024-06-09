@@ -57,7 +57,8 @@ private:
     std::vector<GameObject*> _getObjectsToRemove(GameObject obj1) {
         std::vector<GameObject*> objects_to_remove;
 
-        _checkNeighbors(obj1.color, obj1.x, obj1.y, objects_to_remove, POINT);
+        if (obj1.shapeType != BOMB)
+            _checkNeighbors(obj1.color, obj1.x, obj1.y, objects_to_remove, POINT);
 
         // Если в списке для удаления меньше 3 объектов, очищаем список
         if (objects_to_remove.size() < 2) {
@@ -177,9 +178,48 @@ private:
                 return a->x == b->x && a->y == b->y;
             }), objects_to_remove.end());
 
+
+        std::list<GameObject*> bonus_squares;
+        if (!start_flag) {
+            for (const auto& obj : objects_to_remove) {
+                std::list<GameObject*> non_empty_squares = _getNonEmptySquaresInRadius(obj);
+
+                // Если non_empty_squares не пуст, выбираем один случайный объект и заменяем его тип на ELLIPSE
+                if (!non_empty_squares.empty()) {
+                    srand(time(0));
+                    int random_index = rand() % non_empty_squares.size();
+                    std::list<GameObject*>::iterator it = non_empty_squares.begin();
+                    std::advance(it, random_index);
+                    (*it)->shapeType = BOMB;
+                    (*it)->color = Black;
+                }
+
+                bonus_squares.insert(bonus_squares.end(), non_empty_squares.begin(), non_empty_squares.end());
+            }
+
+            // Сортировка списка bonus_squares перед удалением повторов
+            bonus_squares.sort([](const GameObject* a, const GameObject* b) {
+                if (a->x == b->x) {
+                    return a->y < b->y;
+                }
+                return a->x < b->x;
+                });
+
+            bonus_squares.erase(std::unique(bonus_squares.begin(), bonus_squares.end(),
+                [](const GameObject* a, const GameObject* b) {
+                    return a->x == b->x && a->y == b->y;
+                }), bonus_squares.end());
+
+            // Удаление всех вхождений objects_to_remove из bonus_squares
+            bonus_squares.remove_if([&objects_to_remove](const GameObject* obj) {
+                return std::find(objects_to_remove.begin(), objects_to_remove.end(), obj) != objects_to_remove.end();
+                });
+        }
+
         for (const auto& obj : objects_to_remove) {
             _deleteGameObject(*obj);
         }
+
     }
 
     void _updateGameObjectsY(std::list<GameObject>& row, int start_y) {
@@ -197,6 +237,33 @@ private:
             }
             ++row;
         }
+    }
+
+    std::list<GameObject*> _getNonEmptySquaresInRadius(GameObject* obj) {
+        std::list<GameObject*> non_empty_squares;
+        int radius = 3;
+        auto row = rows.begin();
+        for (int i = 0; i < obj->x - radius; i++) {
+            if (row == rows.end()) {}
+            break;
+            ++row;
+        }
+        std::vector<std::pair<int, int>> potential_points;
+        for (int i = -radius; i <= radius; ++i) {
+            std::list<GameObject>& rowList = *row;
+            if (obj->x + i >= 1 && obj->x + i <= rows.size()) {
+                for (int j = -radius; j <= radius; ++j) {
+                    if ((i * i + j * j <= radius * radius) && !(j == 0 && i == 0) &&
+                        (obj->y + j <= rowList.size()) && (obj->y + j >= 1)) {
+                        non_empty_squares.push_back(&getObject(obj->x + i, obj->y + j));
+                    }
+                }
+                if (row == rows.end())
+                    return non_empty_squares;
+                ++row;
+            }
+        }
+        return non_empty_squares;
     }
 
 
@@ -224,6 +291,7 @@ public:
         } while (!removeSameColorObjects());
         start_flag = false;
     }
+
     // Метод для получения объекта по заданным координатам
     GameObject& getObject(int x, int y) {
 
@@ -240,7 +308,6 @@ public:
             });
         return *objIter;
     }
-
 
     bool swapObjects(int x_index, int y_index, int x_index_last, int y_index_last) {
         auto& obj1 = getObject(x_index, y_index);
@@ -282,7 +349,6 @@ public:
     inline static int x_index_last, y_index_last;
     std::unique_ptr<IRenderer> animate;
 
-
     bool removeSameColorObjects() {
         std::vector<GameObject*> objects_to_remove;
 
@@ -313,7 +379,6 @@ public:
         // Возвращаем true, если были удалены объекты
         return objects_to_remove.empty();
     }
-
 
 };
 

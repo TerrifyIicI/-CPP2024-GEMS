@@ -3,6 +3,7 @@
 #include <math.h>
 #include <vector>
 
+
 void Renderer::init3(GLfloat* vertices, GLfloat size) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
@@ -136,6 +137,55 @@ void Renderer::_drawSquare(GLfloat x, GLfloat y) {
     glBindVertexArray(0);
 }
 
+void Renderer::_drawBomb(GLfloat x, GLfloat y) {
+    // Рисуем тело бомбы (эллипс)
+    const int pointCount = 100; // Увеличиваем количество точек для большей точности
+    const float step = float(2 * M_PI) / pointCount;
+
+    GLfloat vertices[pointCount * 2 * 3]; // 2 вершины на отрезок, 3 координаты на вершину
+    for (int i = 0; i < pointCount; i++) {
+        float angle = i * step;
+        float x1 = dx / 3 * cosf(angle) + x;
+        float y1 = dy / 3 * sinf(angle) + y;
+        float x2 = dx / 3 * cosf(angle + step) + x;
+        float y2 = dy / 3 * sinf(angle + step) + y;
+
+        vertices[i * 6] = x1;
+        vertices[i * 6 + 1] = y1;
+        vertices[i * 6 + 2] = 0.0f;
+
+        vertices[i * 6 + 3] = x2;
+        vertices[i * 6 + 4] = y2;
+        vertices[i * 6 + 5] = 0.0f;
+    }
+
+    init3(vertices, sizeof(vertices));
+    glLineWidth(3);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, pointCount * 2);
+    glBindVertexArray(0);
+
+    glUniform4f(vertexColorLocation, 0.7f, 0.7f, 0.7f, 1.0f);
+    // Рисуем фитиль
+    const int fusePointCount = 30; // Больше точек для более извилистого фитиля
+    GLfloat fuseVertices[fusePointCount * 3];
+    float fuseLength = dy / 6; // Длина фитиля
+    float fuseStep = fuseLength / (fusePointCount - 1);
+    float fuseAmplitude = dx / 6; // Большая амплитуда извилин фитиля
+
+    for (int i = 0; i < fusePointCount; ++i) {
+        float t = i * fuseStep;
+        fuseVertices[i * 3] = x + fuseAmplitude * sinf(t * 300.0f); // Увеличенная частота и амплитуда для более сильных извилин
+        fuseVertices[i * 3 + 1] = y + dy / 3 + t; // Начало фитиля на dy / 3
+        fuseVertices[i * 3 + 2] = 0.0f;
+    }
+
+    init3(fuseVertices, sizeof(fuseVertices));
+    glLineWidth(2);
+    glDrawArrays(GL_LINE_STRIP, 0, fusePointCount);
+    glBindVertexArray(0);
+}
+
+
 void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object) {
     GLfloat delta_x = (GLfloat)(x_new - x) * dx;
     GLfloat delta_y = (GLfloat)(y_new - y) * dy;
@@ -157,8 +207,6 @@ void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag,
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_) {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -233,6 +281,7 @@ ShapeMap Renderer::createShapeMap() {
     shapeMap[ELLIPSE] = std::bind(&Renderer::_drawEllipse, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[TRIANGLE] = std::bind(&Renderer::_drawTriangle, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[RHOMBUS] = std::bind(&Renderer::_drawRhombus, this, std::placeholders::_1, std::placeholders::_2);
+    shapeMap[BOMB] = std::bind(&Renderer::_drawBomb, this, std::placeholders::_1, std::placeholders::_2);
     return shapeMap;
 }
 

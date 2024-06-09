@@ -1,12 +1,14 @@
 #ifndef GAMEOBJECTS_H
 #define GAMEOBJECTS_H
 
-enum ShapeType {
+enum ShapeType
+{
     REULE,
     SQUARE,
     ELLIPSE,
     TRIANGLE,
-    RHOMBUS
+    RHOMBUS,
+    BOMB
 };
 
 enum Color {
