@@ -16,6 +16,7 @@
 #include "Shader.h"
 #include <set>
 #include <map>
+
 // Window dimensions
 GLuint WIDTH = 600, HEIGHT = 800;
 const int x_parts = 5, y_parts = 7;
@@ -98,6 +99,8 @@ public:
                     return a->x > b->x;
                 }
             });
+
+        animate->animateObjectMovement(objects_to_remove);
 
         objects_to_remove.erase(std::unique(objects_to_remove.begin(), objects_to_remove.end(),
             [](const GameObject* a, const GameObject* b) {
@@ -266,15 +269,18 @@ public:
             }
         }
         else {
+            for (auto& row : rows_copy) {
+                for (const auto& obj : row) {
+                    drawObject(obj);
+                }
+            }
             for (auto& entry : swap_queue) {
                 if (std::holds_alternative<SwapObjectData>(entry)) {
                     auto& data = std::get<SwapObjectData>(entry);
-                    // Вызываем swapObject с данными из очереди
                     Animate(data.obj1, data.obj2, true);
                 }
                 else if (std::holds_alternative<AnimateObjectMovementData>(entry)) {
                     auto& data = std::get<AnimateObjectMovementData>(entry);
-                    // Вызываем animateObjectMovement с данными из очереди
                     Animate(data.obj, data.x_new, data.y_new, true);
                 }
             }
@@ -334,8 +340,6 @@ public:
         }
     }
 
-
-
     struct SwapObjectData {
         GameObject obj1;
         GameObject obj2;
@@ -349,15 +353,40 @@ public:
 
     using SwapQueueEntry = std::variant<SwapObjectData, AnimateObjectMovementData>;
     using SwapQueue = std::vector<SwapQueueEntry>;
+    std::list<std::list<GameObject>> rows_copy;
 
     SwapQueue swap_queue;
 
     void swapObject(GameObject& obj1, GameObject& obj2) {
         swap_queue.push_back(SwapObjectData{ obj1, obj2 });
+        std::vector<GameObject*> objects_to_remove{ &obj1, &obj2 };
+        rows_copy = rows;
+        remove_objects(objects_to_remove);
     }
 
-    void animateObjectMovement(GameObject& obj, int x_new, int y_new) {
-        swap_queue.push_back(AnimateObjectMovementData{ std::ref(obj), x_new, y_new });
+
+    void remove_objects(std::vector<GameObject*>& objects_to_remove) {
+        for (auto obj_ptr : objects_to_remove) {
+            int x = obj_ptr->x;
+            int y = obj_ptr->y;
+
+            // Ищем объект в списке rows_copy
+            auto rowIter = std::next(rows_copy.begin(), x - 1);
+            auto objIter = std::find_if(rowIter->begin(), rowIter->end(), [&](const GameObject& obj_copy) {
+                return obj_copy.x == x && obj_copy.y == y;
+                });
+
+            // Если объект найден в списке rows_copy, удаляем его
+            if (objIter != rowIter->end()) {
+                objIter = rowIter->erase(objIter);
+            }
+        }
+    }
+
+
+    void animateObjectMovement(std::vector<GameObject*>& objects_to_remove) {
+        //remove_objects (objects_to_remove);
+        //swap_queue.push_back(AnimateObjectMovementData{std::ref(obj), x_new, y_new});
     }
 
 };
@@ -392,7 +421,6 @@ int main()
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
     GLint vertexColorLocation = glGetUniformLocation(ourShader.Program, "ourColor");
 
     GameRenderer ren = GameRenderer(VBO, VAO, (GLfloat)x_parts, (GLfloat)y_parts, vertexColorLocation);

@@ -2,15 +2,15 @@
 #define IRENDERER_H
 
 #include "GameObjects.h"
+#include <vector>
 
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
     virtual void swapObject(GameObject& obj1, GameObject& obj2) = 0;
-    virtual void animateObjectMovement(GameObject& obj, int x_new, int y_new) = 0;
+    virtual void animateObjectMovement(std::vector<GameObject*>& objects_to_remove) = 0;
     // Добавьте другие методы рендеринга и анимации, которые вам нужны
 };
 
 #endif // IRENDERER_H
-
