@@ -167,8 +167,6 @@ Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y, GLint vertexColorLocation_) : VBO(VBO_), VAO(VAO_), vertexColorLocation(vertexColorLocation_) {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -246,6 +244,14 @@ ColorMap Renderer::createColorMap() {
     colorMap[Blue] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 1.0f, 1.0f); };
     colorMap[Yellow] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 0.0f, 1.0f); };
     colorMap[Black] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); };
+    colorMap[Cyan] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[Magenta] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[Brown] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
+    colorMap[White] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[Gray] = [this]() { glUniform4f(vertexColorLocation, 0.5f, 0.5f, 0.5f, 1.0f); }; // Add this line
+    colorMap[Pink] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.7f, 0.7f, 1.0f); }; // Add this line
+    colorMap[Orange] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
+
     return colorMap;
 }
 

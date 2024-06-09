@@ -14,7 +14,14 @@ enum Color {
     Green,
     Blue,
     Yellow,
+    Cyan,
+    Magenta,
+    Brown,
+    Gray,
+    Pink,
+    Orange,
     Black,
+    White
 };
 
 struct GameObject {
@@ -22,6 +29,10 @@ struct GameObject {
     int y;
     Color color;
     ShapeType shapeType;
+    bool operator==(const GameObject& other) const
+    {
+        return (x == other.x && y == other.y);
+    }
 };
 
 #endif // GAMEOBJECTS_H
