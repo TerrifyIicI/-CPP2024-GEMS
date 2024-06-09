@@ -185,6 +185,70 @@ void Renderer::_drawBomb(GLfloat x, GLfloat y) {
     glBindVertexArray(0);
 }
 
+void Renderer::_drawFill(GLfloat x, GLfloat y) {
+    // Верхний треугольник (линии)
+    GLfloat topTriangleVertices[] = {
+        x + dx / 3, y, 0.0f,
+        x, y + dy / 3, 0.0f,
+        x - dx / 3, y, 0.0f
+    };
+
+
+    init3(topTriangleVertices, sizeof(topTriangleVertices));
+    glLineWidth(3);
+    glDrawArrays(GL_LINE_LOOP, 0, 3);
+    glBindVertexArray(0);
+
+    // Ручка (линии)
+    GLfloat handleVertices[] = {
+        x, y + dy / 3, 0.0f,
+        x - dx / 12, y + dy / 3 + dy / 12 , 0.0f,
+        x - dx / 4, y + dy / 4, 0.0f
+    };
+
+    init3(handleVertices, sizeof(handleVertices));
+    glLineWidth(3);
+    glDrawArrays(GL_LINE_STRIP, 0, 3);
+    glBindVertexArray(0);
+
+    // Нижний треугольник (заполненный)
+    GLfloat bottomTriangleVertices[] = {
+        x + dx / 3, y, 0.0f,
+        x, y - dy / 3, 0.0f,
+        x - dx / 3, y, 0.0f
+    };
+
+    init3(bottomTriangleVertices, sizeof(bottomTriangleVertices));
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+
+    const int pointCount = 20;
+    const float step = float(M_PI) / pointCount;
+
+    GLfloat vertices[(pointCount + 2) * 3]; // Вершины для эллипса и острия капли
+
+    // Рисуем эллипс (нижнюю часть капли)
+    for (int i = 0; i <= pointCount; i++) {
+        float angle = i * step + float(M_PI);
+        float x1 = dx / 12 * cosf(angle) + x;
+        float y1 = dy / 12 * sinf(angle) + y;
+
+        vertices[i * 3] = x1 + dx / 3;
+        vertices[i * 3 + 1] = y1 - dy / 3;
+        vertices[i * 3 + 2] = 0.0f;
+    }
+
+    // Добавляем острие капли
+    vertices[(pointCount + 1) * 3] = x + dx / 3;
+    vertices[(pointCount + 1) * 3 + 1] = y + dy / 6 - dy / 3;
+    vertices[(pointCount + 1) * 3 + 2] = 0.0f;
+
+    init3(vertices, sizeof(vertices));
+    glLineWidth(3);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, pointCount + 2);
+    glBindVertexArray(0);
+
+}
 
 void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag, std::function<void(GLfloat, GLfloat)> draw_object) {
     GLfloat delta_x = (GLfloat)(x_new - x) * dx;
@@ -207,6 +271,8 @@ void Renderer::_AnimateDrawObject(int x, int y, int x_new, int y_new, bool flag,
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_) {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -215,6 +281,8 @@ Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y) : VBO(VBO_), VAO(VAO_
 }
 
 Renderer::Renderer(GLuint VBO_, GLuint VAO_, int x, int y, GLint vertexColorLocation_) : VBO(VBO_), VAO(VAO_), vertexColorLocation(vertexColorLocation_) {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     animate_step = 0;
 
@@ -282,6 +350,7 @@ ShapeMap Renderer::createShapeMap() {
     shapeMap[TRIANGLE] = std::bind(&Renderer::_drawTriangle, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[RHOMBUS] = std::bind(&Renderer::_drawRhombus, this, std::placeholders::_1, std::placeholders::_2);
     shapeMap[BOMB] = std::bind(&Renderer::_drawBomb, this, std::placeholders::_1, std::placeholders::_2);
+    shapeMap[FILL] = std::bind(&Renderer::_drawFill, this, std::placeholders::_1, std::placeholders::_2);
     return shapeMap;
 }
 

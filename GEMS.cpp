@@ -57,8 +57,9 @@ private:
     std::vector<GameObject*> _getObjectsToRemove(GameObject obj1) {
         std::vector<GameObject*> objects_to_remove;
 
-        if (obj1.shapeType != BOMB)
+        if (obj1.shapeType != BOMB && obj1.shapeType != FILL) {
             _checkNeighbors(obj1.color, obj1.x, obj1.y, objects_to_remove, POINT);
+        }
 
         // Если в списке для удаления меньше 3 объектов, очищаем список
         if (objects_to_remove.size() < 2) {
@@ -183,17 +184,7 @@ private:
         if (!start_flag) {
             for (const auto& obj : objects_to_remove) {
                 std::list<GameObject*> non_empty_squares = _getNonEmptySquaresInRadius(obj);
-
-                // Если non_empty_squares не пуст, выбираем один случайный объект и заменяем его тип на ELLIPSE
-                if (!non_empty_squares.empty()) {
-                    srand(time(0));
-                    int random_index = rand() % non_empty_squares.size();
-                    std::list<GameObject*>::iterator it = non_empty_squares.begin();
-                    std::advance(it, random_index);
-                    (*it)->shapeType = BOMB;
-                    (*it)->color = Black;
-                }
-
+                _SetRandomShapeType(non_empty_squares);
                 bonus_squares.insert(bonus_squares.end(), non_empty_squares.begin(), non_empty_squares.end());
             }
 
@@ -220,6 +211,35 @@ private:
             _deleteGameObject(*obj);
         }
 
+    }
+
+    void _SetRandomShapeType(std::list<GameObject*>& non_empty_squares) {
+        // Проверяем, что список не пуст
+        if (!non_empty_squares.empty()) {
+            // Инициализируем генератор случайных чисел один раз
+            static bool initialized = false;
+            if (!initialized) {
+                srand(time(0));
+                initialized = true;
+            }
+
+            // Получаем случайный индекс
+            int random_index = rand() % non_empty_squares.size();
+
+            // Находим элемент по случайному индексу
+            auto it = non_empty_squares.begin();
+            std::advance(it, random_index);
+
+            // Выбираем случайный shapeType: FILL или BOMB
+            int random_choice = rand() % 2; // 0 или 1
+            if (random_choice == 0) {
+                (*it)->shapeType = FILL;
+            }
+            else {
+                (*it)->shapeType = BOMB;
+                (*it)->color = Black;
+            }
+        }
     }
 
     void _updateGameObjectsY(std::list<GameObject>& row, int start_y) {
@@ -392,9 +412,8 @@ private:
     }
 
     void _FieldClick() {
-        if ((((abs(x_index - x_index_last) < 1 && abs(y_index - y_index_last) <= 1) ||
-            (abs(x_index - x_index_last) <= 1 && abs(y_index - y_index_last) < 1)) &&
-            (x_index != x_index_last || y_index != y_index_last))) {
+        if (((abs(x_index - x_index_last) < 1 && abs(y_index - y_index_last) <= 1) ||
+            (abs(x_index - x_index_last) <= 1 && abs(y_index - y_index_last) < 1))) {
             interface->swapObjects(x_index, y_index, x_index_last, y_index_last);
             x_index_last = 0; y_index_last = 0;
         }

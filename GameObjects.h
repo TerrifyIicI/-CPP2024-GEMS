@@ -8,7 +8,8 @@ enum ShapeType
     ELLIPSE,
     TRIANGLE,
     RHOMBUS,
-    BOMB
+    BOMB,
+    FILL
 };
 
 enum Color {
