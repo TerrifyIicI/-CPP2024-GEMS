@@ -1,5 +1,5 @@
 ﻿#include <iostream>
-#include "GameRenderer.h"
+#include "include/GameRenderer.h"
 
 
 void gameLoop(GLFWwindow* window, GameRenderer& ren, Shader& ourShader) {

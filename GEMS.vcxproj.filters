@@ -21,9 +21,6 @@
     <ClCompile Include="GEMS.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -33,39 +30,38 @@
     <ClCompile Include="GameRenderer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Shader.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\GameField.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\GameObjects.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjects.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\GameRenderer.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="IRenderer.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\IRenderer.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GameField.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\Renderer.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GameRenderer.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\Shader.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Исходные файлы</Filter>
+    <ClInclude Include="include\Window.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\default.frag">
-      <Filter>Исходные файлы\shaders</Filter>
-    </None>
-    <None Include="shaders\default.vs">
-      <Filter>Исходные файлы\shaders</Filter>
-    </None>
+    <None Include="shaders\default.frag" />
+    <None Include="shaders\default.vs" />
   </ItemGroup>
 </Project>

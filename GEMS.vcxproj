@@ -143,13 +143,13 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameField.h" />
-    <ClInclude Include="GameObjects.h" />
-    <ClInclude Include="GameRenderer.h" />
-    <ClInclude Include="IRenderer.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Window.h" />
+    <ClInclude Include="include\GameField.h" />
+    <ClInclude Include="include\GameObjects.h" />
+    <ClInclude Include="include\GameRenderer.h" />
+    <ClInclude Include="include\IRenderer.h" />
+    <ClInclude Include="include\Renderer.h" />
+    <ClInclude Include="include\Shader.h" />
+    <ClInclude Include="include\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\default.frag" />

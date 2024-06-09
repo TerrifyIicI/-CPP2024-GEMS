@@ -393,8 +393,10 @@ MigrationBackup/
 !/glew/
 !/glfw/
 !/shaders/
+!/include/
 
 # ��������� ��� ����� � ������ glew � glfw
 !/glew/**
 !/glfw/**
 !/shaders/**
+!/include/**

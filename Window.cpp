@@ -1,4 +1,4 @@
-#include "Window.h"
+#include "include/Window.h"
 
 void initGLFW() {
     glfwInit();

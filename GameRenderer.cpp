@@ -1,4 +1,4 @@
-#include "GameRenderer.h"
+#include "include/GameRenderer.h"
 
     void  GameRenderer::_displayFieldClick() {
         if (_click_on_fild)

@@ -2,7 +2,6 @@
 #define GAMEFIELD_H
 #include <iostream>
 #define GLEW_STATIC
-
 #include <list>
 #include <vector>
 #include <ranges>
@@ -10,6 +9,7 @@
 #include "Renderer.h"
 #include "Shader.h"
 #include "GameObjects.h"
+
 
 enum Direction {
 	LEFT,
