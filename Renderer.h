@@ -10,14 +10,13 @@
 #include <map>
 #include <vector>
 
-
 using DrawFunction = std::function<void(GLfloat, GLfloat)>;
 using ShapeMap = std::map<ShapeType, DrawFunction>;
 using ColorMap = std::map<Color, std::function<void()>>;
 
 class Renderer {
 public:
-    GLfloat steps = 100;
+    GLfloat steps = 50;
     GLfloat animate_step;
     GLint vertexColorLocation;
     Renderer(GLuint VBO, GLuint VAO, int x, int y);

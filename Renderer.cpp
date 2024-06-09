@@ -139,8 +139,10 @@ void Renderer::_drawSquare(GLfloat x, GLfloat y) {
 
 void Renderer::_drawBomb(GLfloat x, GLfloat y) {
     // Рисуем тело бомбы (эллипс)
-    const int pointCount = 100; // Увеличиваем количество точек для большей точности
+    const int pointCount = 30; // Увеличиваем количество точек для большей точности
     const float step = float(2 * M_PI) / pointCount;
+
+    glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
 
     GLfloat vertices[pointCount * 2 * 3]; // 2 вершины на отрезок, 3 координаты на вершину
     for (int i = 0; i < pointCount; i++) {
@@ -357,18 +359,18 @@ ShapeMap Renderer::createShapeMap() {
 ColorMap Renderer::createColorMap() {
     ColorMap colorMap;
 
-    colorMap[Red] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f); };
-    colorMap[Green] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 1.0f, 0.0f, 1.0f); };
-    colorMap[Blue] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 1.0f, 1.0f); };
-    colorMap[Yellow] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 0.0f, 1.0f); };
-    colorMap[Black] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); };
-    colorMap[Cyan] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
-    colorMap[Magenta] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.0f, 1.0f, 1.0f); }; // Add this line
-    colorMap[Brown] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
-    colorMap[White] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
-    colorMap[Gray] = [this]() { glUniform4f(vertexColorLocation, 0.5f, 0.5f, 0.5f, 1.0f); }; // Add this line
-    colorMap[Pink] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.7f, 0.7f, 1.0f); }; // Add this line
-    colorMap[Orange] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
+    colorMap[RED] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.0f, 0.0f, 1.0f); };
+    colorMap[GREEN] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 1.0f, 0.0f, 1.0f); };
+    colorMap[BLUE] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 1.0f, 1.0f); };
+    colorMap[YELLOW] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 0.0f, 1.0f); };
+    colorMap[BLACK] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f); };
+    colorMap[CYAN] = [this]() { glUniform4f(vertexColorLocation, 0.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[MAGENTA] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[BROWN] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
+    colorMap[WHITE] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 1.0f, 1.0f, 1.0f); }; // Add this line
+    colorMap[GRAY] = [this]() { glUniform4f(vertexColorLocation, 0.5f, 0.5f, 0.5f, 1.0f); }; // Add this line
+    colorMap[PINK] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.7f, 0.7f, 1.0f); }; // Add this line
+    colorMap[ORANGE] = [this]() { glUniform4f(vertexColorLocation, 1.0f, 0.5f, 0.0f, 1.0f); }; // Add this line
 
     return colorMap;
 }

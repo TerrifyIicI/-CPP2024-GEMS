@@ -12,19 +12,20 @@ enum ShapeType
     FILL
 };
 
-enum Color {
-    Red,
-    Green,
-    Blue,
-    Yellow,
-    Cyan,
-    Magenta,
-    Brown,
-    Gray,
-    Pink,
-    Orange,
-    Black,
-    White
+enum Color
+{
+    RED,
+    GREEN,
+    BLUE,
+    YELLOW,
+    MAGENTA,
+    CYAN,
+    BROWN,
+    GRAY,
+    PINK,
+    ORANGE,
+    BLACK,
+    WHITE
 };
 
 struct GameObject {
